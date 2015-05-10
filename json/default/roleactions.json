@@ -1,0 +1,13 @@
+[
+	{"role": "user",
+	"actions":
+	[
+		{"label": "GET_/"}
+	]},
+	{"role": "admin",
+	"actions":
+	[
+		{"label": "GET_/"},
+		{"label": "POST_/"}
+	]}
+]

@@ -1,0 +1,4 @@
+[
+	{"userid": "userID1", "role": "user"},
+	{"userid": "userID2", "role": "admin"}
+]

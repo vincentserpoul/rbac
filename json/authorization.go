@@ -1,5 +1,5 @@
 // Package rbacjson to be able to read rbac config from files
-package rbacjson
+package json
 
 import "errors"
 
@@ -27,7 +27,7 @@ type RbacConf struct {
 }
 
 // IsUserAuthorized Tells if the user is authorized for this action or not
-func (AppRbacConf *RbacConf) IsUserAuthorized(userID string, action string) (bool, error) {
+func (AppRbacConf RbacConf) IsUserAuthorized(userID string, action string) (bool, error) {
 	// by default all actions are not authorized
 	isAuthorized := false
 
@@ -60,7 +60,7 @@ func (AppRbacConf *RbacConf) IsUserAuthorized(userID string, action string) (boo
 	}
 
 	if !isAuthorized {
-		err = errors.New(action + "not allowed for the user " + userID + "with his current role, " + role)
+		err = errors.New(action + " not allowed for the user " + userID + " with his current role, " + role)
 	}
 
 	return isAuthorized, err

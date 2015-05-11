@@ -1,4 +1,4 @@
-package rbacjson
+package json
 
 import (
 	"fmt"

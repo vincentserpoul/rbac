@@ -11,18 +11,16 @@ type Auth interface {
 }
 
 // InterposeRBAC returns a Handler that checks if user is logged in. Writes a http.StatusUnauthorized
-func InterposeRBAC(authoriz Auth, userID string) func(http.Handler) http.Handler {
+func InterposeRBAC(authoriz Auth, funcGetUserID func(*http.Request) string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			isAuthorized, err := authoriz.IsUserAuthorized(userID, req.Method+"_"+req.RequestURI)
-
-			if err != nil {
-				log.Fatal(err)
-				http.Error(res, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
+			userID := funcGetUserID(req)
+			action := req.Method + "_" + req.RequestURI
+			isAuthorized, err := authoriz.IsUserAuthorized(userID, action)
 
 			if !isAuthorized {
+				log.Println(userID + ": " + action)
+				log.Println(err)
 				http.Error(res, "Not Authorized", http.StatusUnauthorized)
 				return
 			}

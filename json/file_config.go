@@ -1,5 +1,5 @@
 // Package rbacjson let you use files as data storage for your rbac conf
-package rbacjson
+package json
 
 import (
 	"encoding/json"

@@ -1,7 +1,10 @@
-// Package rbacjson to be able to read rbac config from files
+// Package json to be able to read rbac config from files
 package json
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 // UserRole contains association between user and role, one to one
 type UserRole struct {
@@ -33,14 +36,6 @@ func (AppRbacConf RbacConf) IsUserAuthorized(userID string, action string) (bool
 
 	var err error
 
-	if len(AppRbacConf.AppUserRole) == 0 {
-		return false, errors.New("No existing user roles source data.")
-	}
-
-	if len(AppRbacConf.AppRoleActions) == 0 {
-		return false, errors.New("No existing role actions source data.")
-	}
-
 	role, err := AppRbacConf.getRoleFromUserID(userID)
 
 	if err != nil || role == "" {
@@ -49,21 +44,36 @@ func (AppRbacConf RbacConf) IsUserAuthorized(userID string, action string) (bool
 
 	availableActions, err := AppRbacConf.getAvailableActionsFromRole(role)
 
-	if err != nil || len(availableActions) == 0 {
+	if err != nil {
 		return false, err
 	}
 
-	for _, availableAction := range availableActions {
-		if action == availableAction.Label {
-			isAuthorized = true
-		}
-	}
+	isAuthorized = IsActionWithinAvailableActions(action, availableActions)
 
 	if !isAuthorized {
 		err = errors.New(action + " not allowed for the user " + userID + " with his current role, " + role)
 	}
 
 	return isAuthorized, err
+}
+
+// IsActionWithinAvailableActions tells you if an action is within a set of actions
+func IsActionWithinAvailableActions(action string, availableActions []Action) bool {
+	isWithin := false
+	for _, availableAction := range availableActions {
+		// In case the available action finishes with a *, allowing all subactions
+		if strings.LastIndex(availableAction.Label, "*") == len(availableAction.Label)-1 {
+			actionWOStar := strings.TrimSuffix(availableAction.Label, "*")
+			if strings.Index(action, actionWOStar) == 0 {
+				isWithin = true
+				break
+			}
+		} else if action == availableAction.Label {
+			isWithin = true
+			break
+		}
+	}
+	return isWithin
 }
 
 // getRoleFromUserID gets a role according to userId, if more than one, only one will be returned
@@ -89,7 +99,8 @@ func (AppRbacConf *RbacConf) getRoleFromUserID(userID string) (string, error) {
 
 // getAvailableActionsFromRole gets a list of available actions according to the role, if defined more than once, only the first one will be returned
 func (AppRbacConf *RbacConf) getAvailableActionsFromRole(role string) ([]Action, error) {
-	var availableActions []Action
+	availableActions := []Action{}
+
 	var err error
 
 	for _, roleActions := range AppRbacConf.AppRoleActions {

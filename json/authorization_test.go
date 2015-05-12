@@ -48,19 +48,19 @@ func TestGetAvailableActionsFromRole(t *testing.T) {
 
 	cases := []struct {
 		role string
-		want map[string]bool
+		want []Action
 	}{
 		{
 			"user",
-			map[string]bool{"GET_/": true, "POST_/": false},
+			[]Action{{Label: "GET_/"}},
 		},
 		{
 			"admin",
-			map[string]bool{"GET_/": true, "POST_/": true},
+			[]Action{{Label: "GET_/"}, {Label: "POST_/"}},
 		},
 		{
 			"randomrole",
-			map[string]bool{},
+			[]Action{},
 		},
 	}
 
@@ -68,8 +68,40 @@ func TestGetAvailableActionsFromRole(t *testing.T) {
 
 	for _, c := range cases {
 		got, _ := AppRbacConf.getAvailableActionsFromRole(c.role)
-		if reflect.DeepEqual(got, c.want) {
+		if !reflect.DeepEqual(got, c.want) {
 			t.Errorf("getAvailableActionsFromRole(%q) == %v, want %v", c.role, got, c.want)
+		}
+	}
+}
+
+func TestIsActionWithinAvailableActions(t *testing.T) {
+
+	cases := []struct {
+		action           string
+		availableActions []Action
+		want             bool
+	}{
+		{
+			"GET_/",
+			[]Action{{Label: "GET_/"}, {Label: "POST_/"}},
+			true,
+		},
+		{
+			"GET_/1234",
+			[]Action{{Label: "GET_/"}, {Label: "POST_/"}},
+			false,
+		},
+		{
+			"GET_/1234",
+			[]Action{{Label: "GET_/*"}, {Label: "POST_/"}},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		got := IsActionWithinAvailableActions(c.action, c.availableActions)
+		if got != c.want {
+			t.Errorf("IsActionWithinAvailableActions(%q) == %v, want %v", c.action, got, c.want)
 		}
 	}
 }
@@ -84,6 +116,8 @@ func TestIsUserAuthorized(t *testing.T) {
 		{"userID2", "GET_/", true},
 		{"userID2", "POST_/", true},
 		{"randomuser", "POST_/", false},
+		{"randomuser", "", false},
+		{"", "", false},
 	}
 
 	AppRbacConf := getTestAppRbacConf()

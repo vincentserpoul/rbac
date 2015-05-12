@@ -19,7 +19,6 @@ func InterposeRBAC(authoriz Auth, funcGetUserID func(*http.Request) string) func
 			isAuthorized, err := authoriz.IsUserAuthorized(userID, action)
 
 			if !isAuthorized {
-				log.Println(userID + ": " + action)
 				log.Println(err)
 				http.Error(res, "Not Authorized", http.StatusUnauthorized)
 				return
